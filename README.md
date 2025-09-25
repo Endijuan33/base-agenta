@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# base-agenta
+
+# Next.js dApp Starter
+
+This is a starter project for building decentralized applications (dApps) with Next.js, TypeScript, and a complete Web3 stack.
+
+## Features
+
+- **Next.js App Router:** The latest Next.js features for building modern web applications.
+- **TypeScript:** Type safety for a more robust codebase.
+- **Tailwind CSS:** A utility-first CSS framework for rapid UI development.
+- **Web3Modal:** A simple and intuitive wallet connection modal.
+- **wagmi & viem:** Powerful React hooks and utilities for interacting with Ethereum.
+- **Reusable Components:** A set of pre-built components to get you started.
 
 ## Getting Started
 
-First, run the development server:
+1.  **Install Dependencies:**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+    ```bash
+    npm install
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2.  **Set Up Environment Variables:**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+    Copy the `.env.example` file to `.env.local` and fill in the required values:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+    ```bash
+    cp .env.example .env.local
+    ```
 
-## Learn More
+    - `NEXT_PUBLIC_RPC_URLS`: A comma-separated list of RPC URLs for the supported networks.
+    - `NEXT_PUBLIC_ERC20_CONTRACT`: The contract address of the ERC-20 token to display the balance for.
+    - `NEXT_PUBLIC_APP_NAME`: The name of your application.
 
-To learn more about Next.js, take a look at the following resources:
+3.  **Run the Development Server:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    ```bash
+    npm run dev
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `npm run dev`: Starts the development server.
+- `npm run build`: Builds the application for production.
+- `npm run start`: Starts the production server.
+- `npm run lint`: Lints the codebase for errors.
