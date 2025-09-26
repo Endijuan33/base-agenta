@@ -1,6 +1,7 @@
 import BalanceCard from "@/components/BalanceCard";
 import Navbar from "@/components/Navbar";
 import SendForm from "@/components/SendForm";
+import TokenBalances from "@/components/TokenBalances";
 import TransactionHistory from "@/components/TransactionHistory";
 
 export default function Home() {
@@ -23,8 +24,9 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="flex justify-center">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <TransactionHistory />
+        <TokenBalances />
       </div>
     </div>
   );
