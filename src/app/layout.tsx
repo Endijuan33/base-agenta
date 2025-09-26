@@ -1,26 +1,30 @@
-
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import { Toaster } from 'react-hot-toast'
-import { Web3ModalProvider } from '../lib/wagmi'
-import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
+import type { Metadata } from "next";
+import { Web3ModalProvider } from "@/lib/wagmi";
+import { Toaster } from "react-hot-toast";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'dApp Starter',
-  description: 'A Next.js starter for building dApps',
-}
+  title: "Modern dApp",
+  description: "A modern, robust dApp with a great UI",
+};
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body>
         <Web3ModalProvider>
-          {children}
-          <Toaster />
+          <div className="min-h-screen flex flex-col">
+            <main className="flex-grow container mx-auto px-4 py-8">
+              {children}
+            </main>
+            <Toaster position="bottom-right" />
+          </div>
         </Web3ModalProvider>
       </body>
     </html>
-  )
+  );
 }
