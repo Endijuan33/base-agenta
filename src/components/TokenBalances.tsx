@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useChainId } from 'wagmi'; // 1. Import useChainId
+import { useChainId } from 'wagmi';
+import { formatUnits } from 'viem';
 
-// Define the structure of a token balance item
+// Define the structure of a token balance item from Covalent API
 interface TokenBalance {
   logo_url: string;
   contract_name: string;
@@ -14,18 +15,40 @@ interface TokenBalance {
   contract_decimals: number;
 }
 
-// Helper to format balance
-const formatBalance = (balance: string, decimals: number) => {
+// Helper to format balance safely and effectively
+const formatTokenBalance = (balance: string, decimals: number): string => {
   try {
-    const numericValue = BigInt(balance);
-    const divisor = BigInt(10) ** BigInt(decimals);
-    const result = Number(numericValue * 100000n / divisor) / 100000; // Keep precision for small balances
-    return result.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 5 });
+    const formattedValue = parseFloat(formatUnits(BigInt(balance), decimals));
+    if (formattedValue === 0) return '0.00';
+
+    // Use smart formatting for readability
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: formattedValue < 1 ? 6 : 4, // More precision for small numbers
+    }).format(formattedValue);
+
   } catch (error) {
-      console.error("Error formatting balance:", { balance, decimals }, error);
-      return '0.00';
+    console.error("Error formatting balance:", { balance, decimals }, error);
+    return '0.00';
   }
 };
+
+// Skeleton component for loading state
+const TokenRowSkeleton = () => (
+  <li className="bg-white/5 p-4 rounded-lg flex items-center justify-between animate-pulse">
+    <div className="flex items-center space-x-4">
+      <div className="w-10 h-10 rounded-full bg-gray-600"></div>
+      <div>
+        <div className="h-4 bg-gray-600 rounded w-24 mb-2"></div>
+        <div className="h-3 bg-gray-600 rounded w-16"></div>
+      </div>
+    </div>
+    <div className="text-right">
+      <div className="h-4 bg-gray-600 rounded w-20 mb-2"></div>
+      <div className="h-3 bg-gray-600 rounded w-12"></div>
+    </div>
+  </li>
+);
 
 interface TokenBalancesProps {
   address: `0x${string}` | undefined;
@@ -35,7 +58,7 @@ const TokenBalances = ({ address }: TokenBalancesProps) => {
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const chainId = useChainId(); // 2. Get the active chainId
+  const chainId = useChainId();
 
   useEffect(() => {
     if (!address) {
@@ -47,23 +70,17 @@ const TokenBalances = ({ address }: TokenBalancesProps) => {
       setIsLoading(true);
       setError(null);
 
-      const apiKey = process.env.NEXT_PUBLIC_COVALENT_API_KEY;
-      if (!apiKey) {
-        setError('Covalent API key is not configured.');
-        setIsLoading(false);
-        return;
-      }
-
-      // 3. Use the dynamic chainId in the API URL
-      const url = `https://api.covalenthq.com/v1/${chainId}/address/${address}/balances_v2/?key=${apiKey}`;
+      // Fetch from our own secure API route
+      const url = `/api/balances?address=${address}&chainId=${chainId}`;
 
       try {
         const response = await fetch(url);
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error_message || `Failed to fetch balances: ${response.statusText}`);
-        }
         const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || `Failed to fetch balances: ${response.statusText}`);
+        }
+
         setBalances(data.data.items || []);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : 'An unknown error occurred.');
@@ -73,20 +90,25 @@ const TokenBalances = ({ address }: TokenBalancesProps) => {
     };
 
     fetchBalances();
-  }, [address, chainId]); // 4. Add chainId to the dependency array
+  }, [address, chainId]);
 
   const renderContent = () => {
     if (!address) {
-      return <p className="text-center text-gray-400">Please connect your wallet to view token balances.</p>;
+      return <p className="text-center text-gray-400 py-8">Please connect your wallet.</p>;
     }
     if (isLoading) {
-      return <p className="text-center text-gray-400 animate-pulse">Loading token balances...</p>;
+      // Render skeleton loaders
+      return (
+        <ul className="space-y-3">
+          {[...Array(3)].map((_, i) => <TokenRowSkeleton key={i} />)}
+        </ul>
+      );
     }
     if (error) {
-      return <p className="text-center text-red-400">Error: {error}</p>;
+      return <p className="text-center text-red-400 py-8">Error: {error}</p>;
     }
     if (balances.length === 0) {
-      return <p className="text-center text-gray-400">No token balances found on this network.</p>;
+      return <p className="text-center text-gray-400 py-8">No token balances found on this network.</p>;
     }
 
     return (
@@ -104,7 +126,7 @@ const TokenBalances = ({ address }: TokenBalancesProps) => {
               </div>
             </div>
             <div className="text-right">
-              <p className="font-semibold text-white">{formatBalance(token.balance, token.contract_decimals)}</p>
+              <p className="font-semibold text-white">{formatTokenBalance(token.balance, token.contract_decimals)}</p>
               <p className="text-sm text-green-400">${token.quote?.toFixed(2) ?? '0.00'}</p>
             </div>
           </li>
@@ -114,7 +136,8 @@ const TokenBalances = ({ address }: TokenBalancesProps) => {
   };
 
   return (
-    <div className="w-full max-w-4xl bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+    // Use the reusable card class for consistent styling
+    <div className="card w-full max-w-4xl">
       <h2 className="text-2xl font-bold text-white mb-6">Token Balances</h2>
       {renderContent()}
     </div>

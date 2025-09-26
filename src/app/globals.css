@@ -1,27 +1,39 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 10, 10, 15;
-  --background-end-rgb: 25, 25, 35;
-  --primary-glow: 69, 123, 229;
-  --card-background: 18, 18, 24;
-  --card-border: 30, 30, 40;
-}
+/* Define a custom font if you have one, or rely on Tailwind's default stack */
+/* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'); */
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  font-family: 'Poppins', sans-serif;
+  /*
+    HARDCODED COLORS: The theme() function was causing a persistent, unresolvable build error.
+    As a last resort, the hex codes are used directly here to bypass the issue.
+    darkBlueGray: #1f2937
+    darkSlate: #0f172a
+    gray-200: #e5e7eb
+  */
+  background-color: #1f2937;
+  background-image: linear-gradient(180deg, #1f2937, #0f172a);
+  color: #e5e7eb;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif; /* A cleaner, more modern font */
+}
+
+/* Add a subtle noise texture overlay for a premium feel */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABVQTFRF////AAAAAAAAAAAAAAAAAAAA////AAAAVQWLfAAAAAd0Uk5T////////ABpLA0YAAAA9SURBVDjLY2DAB/iserNl2bJl2bJl2bJl2bJl2bJl2bJl2bJl2bJl2bJl2bJl2bJl2bJl2bJl2TISEgABBgAacgH8eLeS5QAAAABJRU5ErkJggg==');
+  opacity: 0.04;
+  z-index: -1;
+  pointer-events: none;
 }
 
 @layer utilities {

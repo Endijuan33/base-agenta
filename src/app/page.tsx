@@ -2,47 +2,44 @@
 
 import { useAccount } from 'wagmi';
 import BalanceCard from '../components/BalanceCard';
-import TokenBalances from '../components/TokenBalances';
-import TransactionHistory from '../components/TransactionHistory';
-import SendForm from '../components/SendForm';
-import NFTGallery from '../components/NFTGallery';
 import SwapForm from '../components/SwapForm';
-import DeFiPositions from '../components/DeFiPositions';
 
 export default function Home() {
   const { address } = useAccount();
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        
-        <header className="mb-8">
-          <h1 className="text-4xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-600">
-            Multi-Chain DeFi Dashboard
-          </h1>
-        </header>
+    <div className="flex flex-col items-center w-full">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* 1. Hero Section */}
+      <div className="text-center mb-12 md:mb-16">
+        <h1 
+          className="text-5xl md:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text 
+                     bg-gradient-to-tr from-vibrant-purple to-blue-400 mb-4 animate-[fade-in-down_1s_ease-out]"
+        >
+          DeFi Command Center
+        </h1>
+        <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-300 animate-[fade-in-up_1s_ease-out_0.5s]">
+          Seamlessly swap assets, track your portfolio, and navigate the multi-chain world with unparalleled speed and style.
+        </p>
+      </div>
 
-          {/* Main Column: Core Actions */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <SendForm />
-                <SwapForm />
-            </div>
-            <TokenBalances address={address} />
-            <TransactionHistory address={address} />
-          </div>
+      {/* 2. Main Dashboard Layout (Two-column) */}
+      <div className="w-full grid grid-cols-1 lg:grid-cols-5 gap-8 xl:gap-12">
 
-          {/* Right Sidebar: Summaries & Visuals */}
-          <div className="space-y-6">
-            {/* Pass address prop to BalanceCard */}
-            <BalanceCard address={address} /> 
-            <NFTGallery address={address} />
-            <DeFiPositions />
-          </div>
-
+        {/* Left/Main Column */}
+        <div className="lg:col-span-3 w-full animate-[fade-in-left_1s_ease-out_1s]">
+          <SwapForm />
         </div>
+
+        {/* Right Sidebar */}
+        <div className="lg:col-span-2 w-full space-y-8 animate-[fade-in-right_1s_ease-out_1.2s]">
+          <BalanceCard address={address} />
+          {/* 
+            Future components like TokenBalances or NFTGallery can be added here.
+            Keeping it clean for now to highlight the main features.
+          */}
+        </div>
+
       </div>
     </div>
   );

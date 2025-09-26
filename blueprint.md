@@ -44,7 +44,29 @@ This document outlines the architecture, features, and design of "Base Agenta". 
 - `next.config.ts`: Next.js configuration, including image domain whitelisting.
 - `tsconfig.json`: TypeScript configuration, set to target `ES2020` to support modern JavaScript features like BigInt literals.
 
-## Current Plan & Steps (Completed)
+## Current Plan: Visual Overhaul
+
+This section outlines the plan to elevate the application's visual design from a functional prototype to a polished, premium user experience, following the project's design guidelines.
+
+1.  **Enhanced Background & Atmosphere:**
+    *   **Action:** Replace the solid background with an elegant dark gradient (from dark-blue-gray to dark-slate).
+    *   **Action:** Apply a subtle noise texture overlay to the entire background to create a tactile, premium feel.
+
+2.  **Modernized Component Styling:**
+    *   **Action:** Redesign primary UI elements (Cards, Buttons, Forms) with new styles.
+    *   **"Lifted" Card Effect:** Cards will be updated with a darker, semi-transparent background and a multi-layered drop shadow to appear "lifted" off the page.
+    *   **"Glow" Effect:** Key interactive elements, like the main "Connect" button, will receive a "glow" effect using the primary accent color (a vibrant purple) to draw attention and indicate interactivity.
+
+3.  **Refined Typography & Layout:**
+    *   **Action:** Improve the visual hierarchy through more deliberate use of font sizes and weights.
+    *   **Action:** Adjust spacing and alignment across the application to give components more "breathing room" and create a more visually balanced layout.
+
+4.  **Implementation Strategy:**
+    *   Start with global styles (`globals.css` and `layout.tsx`) to set the new background and atmosphere.
+    *   Incrementally update individual components (`ConnectButton`, `WalletInfo`, `TransactionHistory`, etc.) to adopt the new design language.
+    *   Update `tailwind.config.ts` with any new custom colors or effects.
+
+## Previous Plan (Completed)
 
 This section outlines the steps taken to implement the latest set of features and fixes.
 

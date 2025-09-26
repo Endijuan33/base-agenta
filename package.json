@@ -12,6 +12,7 @@
     "@types/lodash.debounce": "^4.0.9",
     "@web3modal/wagmi": "^5.1.11",
     "lodash.debounce": "^4.0.8",
+    "lucide-react": "^0.544.0",
     "next": "15.5.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",

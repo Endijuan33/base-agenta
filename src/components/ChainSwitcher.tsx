@@ -1,68 +1,82 @@
 'use client'
 
 import { useSwitchChain, useChainId } from 'wagmi'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { chains } from '@/lib/wagmi';
-import type { Chain } from '@wagmi/core/chains';
-
-// Define a new type that extends the wagmi Chain type with our custom property
-type ChainWithIcon = Chain & { iconUrl?: string };
-
-// Create a new array by mapping over the original `chains` array.
-// This is the correct, type-safe way to add the `iconUrl` property.
-const chainsWithIcons: ChainWithIcon[] = chains.map(chain => {
-    const newChain: ChainWithIcon = { ...chain }; // Create a mutable copy
-    switch(chain.id) {
-        case 1: newChain.iconUrl = 'https://assets.coingecko.com/coins/images/279/small/ethereum.png'; break;
-        case 8453: newChain.iconUrl = 'https://assets.coingecko.com/coins/images/34365/small/base_logo.png'; break;
-        case 137: newChain.iconUrl = 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png'; break;
-        case 42161: newChain.iconUrl = 'https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg'; break;
-    }
-    return newChain;
-});
+import { toast } from 'react-hot-toast';
+import { Check, ChevronDown } from 'lucide-react';
 
 const ChainSwitcher = () => {
-  const { switchChain } = useSwitchChain();
+  const { switchChain, isPending, error } = useSwitchChain();
   const chainId = useChainId();
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const activeChain = chainsWithIcons.find((chain) => chain.id === chainId);
+  const activeChain = chains.find((chain) => chain.id === chainId);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownRef]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message);
+    }
+  }, [error]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
+      {/* Main button styled as a mini 'lifted' card */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full px-4 py-2 text-white bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600"
+        disabled={isPending}
+        className="card flex items-center justify-between w-full min-w-[180px] px-4 py-2 text-white font-semibold transition-all duration-300 hover:border-vibrant-purple/50 disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        {activeChain && activeChain.iconUrl ? (
-            <div className="flex items-center">
-                <Image src={activeChain.iconUrl} alt={`${activeChain.name} logo`} width={24} height={24} className="mr-2 rounded-full"/>
-                <span>{activeChain.name}</span>
-            </div>
+        {isPending ? (
+          <div className="flex items-center gap-2">
+            <svg className="animate-spin h-5 w-5 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Switching...</span>
+          </div>
+        ) : activeChain && activeChain.iconUrl ? (
+          <div className="flex items-center gap-2">
+            <Image src={activeChain.iconUrl} alt={`${activeChain.name} logo`} width={24} height={24} className="rounded-full bg-white/10"/>
+            <span>{activeChain.name}</span>
+          </div>
         ) : (
-            <span>{activeChain?.name || 'Select Network'}</span>
+          <span>{activeChain?.name || 'Select Network'}</span>
         )}
-        <svg className={`w-5 h-5 ml-2 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-        </svg>
+        <ChevronDown className={`w-5 h-5 ml-2 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} />
       </button>
 
+      {/* Dropdown Menu - also styled as a lifted card */}
       {isOpen && (
-        <div className="absolute right-0 w-full mt-2 origin-top-right bg-gray-800 border border-gray-600 rounded-md shadow-lg z-10">
-          <div className="py-1">
-            {chainsWithIcons.map((chain) => (
+        <div className="card absolute right-0 w-full mt-2 origin-top-right z-10 p-2">
+          <div className="flex flex-col gap-1">
+            {chains.map((chain) => (
               <button
                 key={chain.id}
                 onClick={() => {
-                  switchChain({ chainId: chain.id })
-                  setIsOpen(false)
+                  if (chain.id !== chainId) {
+                    switchChain({ chainId: chain.id });
+                  }
+                  setIsOpen(false);
                 }}
                 disabled={chainId === chain.id}
-                className="flex items-center w-full px-4 py-2 text-sm text-left text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center w-full px-3 py-2 text-sm text-left text-white rounded-md transition-colors hover:bg-white/5 disabled:bg-vibrant-purple/20 disabled:cursor-not-allowed"
               >
-                {chain.iconUrl && <Image src={chain.iconUrl} alt={`${chain.name} logo`} width={20} height={20} className="mr-3 rounded-full"/>}
-                {chain.name}
+                <Image src={chain.iconUrl} alt={`${chain.name} logo`} width={20} height={20} className="mr-3 rounded-full bg-white/10"/>
+                <span className="flex-grow">{chain.name}</span>
+                {chainId === chain.id && <Check className="h-4 w-4 text-vibrant-purple"/>}
               </button>
             ))}
           </div>

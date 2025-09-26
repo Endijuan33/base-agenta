@@ -1,11 +1,15 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useSendTransaction, useWriteContract } from 'wagmi'; 
+import { useState, useEffect, Dispatch, SetStateAction, useMemo } from 'react';
+import { useAccount, useSendTransaction, useWriteContract, useBalance } from 'wagmi'; 
 import { parseUnits, formatUnits } from 'viem';
 import { erc20Abi } from '../lib/erc20Abi';
 import toast from 'react-hot-toast';
 import debounce from 'lodash.debounce';
+import Image from 'next/image';
+import { ArrowDownUp, ChevronDown, Search } from 'lucide-react';
+
+// --- TYPES AND CONSTANTS ---
 
 interface Token {
   symbol: string;
@@ -21,16 +25,93 @@ interface Quote {
   to: `0x${string}`;
   data: `0x${string}`;
   value: string;
-  gas: string;
 }
 
-// Token list for Base network
 const tokens: Token[] = [
   { symbol: 'ETH', address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png' },
   { symbol: 'USDC', address: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', decimals: 6, logoURI: 'https://assets.coingecko.com/coins/images/6319/small/usdc.png' },
   { symbol: 'DEGEN', address: '0x4ed4e862860bed51a9570b96d89af5e1b0efefed', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/34530/small/degen.jpg' },
   { symbol: 'WETH', address: '0x4200000000000000000000000000000000000006', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/2518/small/weth.png' },
 ];
+
+// --- SUB-COMPONENTS ---
+
+const TokenSelectModal = ({ isOpen, onClose, setToken, otherToken }: { isOpen: boolean, onClose: () => void, setToken: (token: Token) => void, otherToken: Token }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    if (!isOpen) return null;
+    
+    const filteredTokens = tokens.filter(t => t.symbol.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
+            <div className="w-full max-w-md m-4 p-4 rounded-xl shadow-card-lifted border border-[rgba(255,255,255,0.05)] bg-[rgba(15,23,42,0.75)] backdrop-blur-[8px]" onClick={e => e.stopPropagation()}>
+                <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"/>
+                    <input 
+                        type="text"
+                        placeholder="Search by symbol..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="w-full bg-dark-slate border border-white/10 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-vibrant-purple/50"
+                    />
+                </div>
+                <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto">
+                    {filteredTokens.map(token => (
+                        <button key={token.address} onClick={() => { setToken(token); onClose(); }} className="flex items-center gap-3 p-3 rounded-lg text-left hover:bg-white/5 transition-colors">
+                            <Image src={token.logoURI} alt={token.symbol} width={40} height={40} className="rounded-full"/>
+                            <div>
+                                <p className="font-bold text-lg text-white">{token.symbol}</p>
+                                {token.address === otherToken.address && <p className="text-sm text-gray-400">Already selected</p>}
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+interface SwapInputProps {
+    amount: string;
+    setAmount?: Dispatch<SetStateAction<string>>;
+    token: Token;
+    setToken: Dispatch<SetStateAction<Token>>;
+    otherToken: Token;
+    label: string;
+    balance?: string;
+}
+
+const SwapInput = ({ amount, setAmount, token, setToken, otherToken, label, balance }: SwapInputProps) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    return (
+        <div className="bg-dark-slate/50 border border-white/10 rounded-xl p-4">
+            <div className="flex justify-between items-center mb-1">
+                <label className="text-sm font-medium text-gray-400">{label}</label>
+                <span className="text-xs text-gray-400">Balance: {balance ? parseFloat(balance).toFixed(4) : '0.00'}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount && setAmount(e.target.value)}
+                  placeholder="0.0"
+                  className="w-full bg-transparent text-4xl font-mono text-white focus:outline-none appearance-none disabled:cursor-not-allowed"
+                  disabled={!setAmount}
+                />
+                <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-dark-blue-gray/50 border border-white/10 rounded-full py-2 px-4 transition-colors hover:bg-white/5">
+                    <Image src={token.logoURI} alt={token.symbol} width={28} height={28} className="rounded-full"/>
+                    <span className="font-bold text-xl text-white">{token.symbol}</span>
+                    <ChevronDown className="h-5 w-5 text-gray-400"/>
+                </button>
+            </div>
+            <TokenSelectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} setToken={setToken} otherToken={otherToken} />
+        </div>
+    );
+};
+
+// --- MAIN COMPONENT ---
 
 const SwapForm = () => {
   const { address, isConnected } = useAccount();
@@ -44,176 +125,84 @@ const SwapForm = () => {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
-  // Debounced quote fetching function
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const fetchQuote = useCallback(debounce(async (currentSellAmount: string, currentSellToken: Token, currentBuyToken: Token) => {
-    if (!address || !currentSellAmount || parseFloat(currentSellAmount) <= 0 || currentSellToken.address === currentBuyToken.address) {
-      setBuyAmount('');
-      setQuote(null);
-      return;
-    }
+  const { data: sellTokenBalance } = useBalance({ address, token: sellToken.address === tokens[0].address ? undefined : sellToken.address });
 
-    const params = new URLSearchParams({
-        sellToken: currentSellToken.address,
-        buyToken: currentBuyToken.address,
-        sellAmount: parseUnits(currentSellAmount, currentSellToken.decimals).toString(),
-        takerAddress: address,
-    });
-    
-    const quotePromise = fetch(`https://base.api.0x.org/swap/v1/quote?${params}`);
-
-    toast.promise(quotePromise, {
-      loading: 'Fetching best price...',
-      success: (res) => {
-        if (!res.ok) throw new Error('Could not fetch quote'); 
-        return 'Quote updated!';
-      },
-      error: 'Error fetching quote',
-    });
-
-    try {
-      const response = await quotePromise;
-      if (!response.ok) {
-        setBuyAmount('');
-        setQuote(null);
-        return;
-      }
-      const quoteData: Quote = await response.json();
-      setBuyAmount(formatUnits(BigInt(quoteData.buyAmount), currentBuyToken.decimals));
-      setQuote(quoteData);
-    } catch (error) {
-      console.error("Failed to fetch quote:", error);
-      setBuyAmount('');
-      setQuote(null);
-    }
-  }, 500), [address]);
-
-  useEffect(() => {
-    fetchQuote(sellAmount, sellToken, buyToken);
-  }, [sellAmount, sellToken, buyToken, fetchQuote]);
-
-  const handleSwap = async () => {
-    if (!isConnected || !address || !quote) {
-      toast.error('Please connect your wallet and enter an amount.');
-      return;
-    }
-
-    setIsExecuting(true);
-
-    try {
-      // 1. Check for and request token allowance if needed
-      if (sellToken.address !== '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
-        const allowanceResponse = await fetch(`https://base.api.0x.org/swap/v1/allowance?tokenAddress=${sellToken.address}&takerAddress=${address}`);
-        const allowanceData = await allowanceResponse.json();
-        const currentAllowance = BigInt(allowanceData.allowance);
-
-        if (currentAllowance < BigInt(quote.sellAmount)) {
-          const approvePromise = writeContractAsync({
-            abi: erc20Abi,
-            address: sellToken.address as `0x${string}`,
-            functionName: 'approve',
-            args: [quote.allowanceTarget, BigInt(quote.sellAmount)],
-          });
-
-          await toast.promise(approvePromise, {
-            loading: `Requesting approval for ${sellToken.symbol}...`,
-            success: 'Token approval successful!',
-            error: 'Failed to approve token',
-          });
+  const debouncedFetchQuote = useMemo(
+    () => 
+      debounce(async (currentSellAmount: string, currentSellToken: Token, currentBuyToken: Token, currentAddress: `0x${string}` | undefined) => {
+        if (!currentAddress || !currentSellAmount || parseFloat(currentSellAmount) <= 0 || currentSellToken.address === currentBuyToken.address) {
+          setBuyAmount(''); setQuote(null); return;
         }
-      }
-      
-      // 2. Execute the swap transaction
-      const swapPromise = sendTransactionAsync({
-        to: quote.to,
-        data: quote.data,
-        value: BigInt(quote.value),
-      });
-
-      await toast.promise(swapPromise, {
-        loading: 'Sending swap transaction...',
-        success: (txHash) => (
-            <div>
-                Swap successful!
-                <a href={`https://basescan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="text-indigo-400 ml-2 underline">View on Basescan</a>
-            </div>
-        ),
-        error: (err: { shortMessage?: string; message: string }) => `Swap failed: ${err.shortMessage || err.message}`,
-      });
-
-      // Reset form state after successful swap
-      setSellAmount('');
-      setBuyAmount('');
-      setQuote(null);
-
-    } catch (err) {
-      // Errors are handled by toast.promise, so we just log them here
-      console.error("Swap execution failed:", err);
-    } finally {
-      setIsExecuting(false);
-    }
-  };
-
-  const TokenSelector = ({ token, setToken, otherToken }: { token: Token, setToken: (token: Token) => void, otherToken: Token }) => (
-    <select 
-        value={token.address}
-        onChange={(e) => {
-            if (e.target.value === otherToken.address) {
-                // If selecting the same token, swap them
-                setSellToken(buyToken);
-                setBuyToken(sellToken);
-            } else {
-                setToken(tokens.find(t => t.address === e.target.value)!)
-            }
-        }}
-        className="bg-gray-800 text-white rounded-md p-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-    >
-        {tokens.map(t => (
-            <option key={t.address} value={t.address}>{t.symbol}</option>
-        ))}
-    </select>
+        const params = new URLSearchParams({ sellToken: currentSellToken.address, buyToken: currentBuyToken.address, sellAmount: parseUnits(currentSellAmount, currentSellToken.decimals).toString(), takerAddress: currentAddress });
+        const toastId = toast.loading('Fetching best price...');
+        try {
+          const response = await fetch(`https://base.api.0x.org/swap/v1/quote?${params}`);
+          if (!response.ok) throw new Error('Could not fetch quote');
+          const quoteData: Quote = await response.json();
+          setBuyAmount(formatUnits(BigInt(quoteData.buyAmount), currentBuyToken.decimals));
+          setQuote(quoteData);
+          toast.success('Quote updated!', { id: toastId });
+        } catch (error) { console.error("Failed to fetch quote:", error); setBuyAmount(''); setQuote(null); toast.error('Error fetching quote', { id: toastId }); }
+      }, 500),
+    [setBuyAmount, setQuote] // State setters are stable and won't cause re-creation
   );
 
+  useEffect(() => {
+      debouncedFetchQuote(sellAmount, sellToken, buyToken, address);
+      return () => {
+        debouncedFetchQuote.cancel();
+      }
+  }, [sellAmount, sellToken, buyToken, address, debouncedFetchQuote]);
+
+  const handleSwap = async () => {
+    if (!isConnected || !address || !quote) return;
+    setIsExecuting(true);
+    try {
+        if (sellToken.address !== tokens[0].address) { // Check for allowance if not ETH
+            const allowanceRes = await fetch(`https://base.api.0x.org/swap/v1/allowance?tokenAddress=${sellToken.address}&takerAddress=${address}`);
+            const { allowance } = await allowanceRes.json();
+            if (BigInt(allowance) < BigInt(quote.sellAmount)) {
+                await toast.promise(writeContractAsync({ abi: erc20Abi, address: sellToken.address, functionName: 'approve', args: [quote.allowanceTarget, BigInt(quote.sellAmount)] }), {
+                    loading: `Requesting approval for ${sellToken.symbol}...`, success: 'Token approval successful!', error: 'Failed to approve token',
+                });
+            }
+        }
+        const txHash = await sendTransactionAsync({ to: quote.to, data: quote.data, value: BigInt(quote.value) });
+        toast.promise(Promise.resolve(txHash), {
+          loading: 'Sending swap transaction...',
+          success: (hash) => <div>Swap successful! <a href={`https://basescan.org/tx/${hash}`} target="_blank" rel="noopener noreferrer" className="text-vibrant-purple underline">View on Basescan</a></div>,
+          error: (err) => `Swap failed: ${err.message}`,
+        });
+        setSellAmount(''); setBuyAmount(''); setQuote(null);
+    } catch (err) { console.error("Swap execution failed:", err); } finally { setIsExecuting(false); }
+  };
+
+  const handleTokenSwitch = () => { const temp = sellToken; setSellToken(buyToken); setBuyToken(temp); };
+
+  const buttonText = isExecuting ? 'Processing...' : (quote ? 'Swap' : 'Enter an amount');
+  const isButtonDisabled = isExecuting || !quote || !isConnected || parseFloat(sellAmount) <= 0;
+
   return (
-    <div className="w-full max-w-md mx-auto bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-      <h2 className="text-2xl font-bold text-white mb-4 text-center">Token Swap</h2>
-      <div className="space-y-4">
-        <div className="bg-black/20 p-4 rounded-lg">
-          <label className="text-sm font-medium text-gray-300">You Sell</label>
-          <div className="flex items-center justify-between mt-1">
-            <input
-              type="number"
-              value={sellAmount}
-              onChange={(e) => setSellAmount(e.target.value)}
-              placeholder="0.0"
-              className="w-full bg-transparent text-3xl text-white focus:outline-none appearance-none"
-            />
-            <TokenSelector token={sellToken} setToken={setSellToken} otherToken={buyToken}/>
-          </div>
+    <div className="w-full max-w-lg mx-auto p-6 relative overflow-hidden rounded-xl shadow-card-lifted border border-[rgba(255,255,255,0.05)] bg-[rgba(15,23,42,0.75)] backdrop-blur-[8px]">
+      <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-80 h-80 bg-vibrant-purple/20 rounded-full blur-3xl opacity-60" />
+      <div className="relative z-10">
+        <h2 className="text-3xl font-bold text-white text-center mb-6">Token Swap</h2>
+        <div className="flex flex-col gap-2 relative">
+            <SwapInput label="You Sell" amount={sellAmount} setAmount={setSellAmount} token={sellToken} setToken={setSellToken} otherToken={buyToken} balance={sellTokenBalance?.formatted} />
+            <div className="flex justify-center items-center my-[-10px] z-20">
+                <button onClick={handleTokenSwitch} className="bg-dark-slate border-4 border-dark-blue-gray rounded-full p-2 transition-transform duration-300 hover:rotate-180 hover:scale-110">
+                    <ArrowDownUp className="h-5 w-5 text-gray-300"/>
+                </button>
+            </div>
+            <SwapInput label="You Buy (Estimated)" amount={buyAmount} token={buyToken} setToken={setBuyToken} otherToken={sellToken} />
         </div>
-
-        <div className="bg-black/20 p-4 rounded-lg">
-          <label className="text-sm font-medium text-gray-300">You Buy</label>
-          <div className="flex items-center justify-between mt-1">
-            <input
-              type="number"
-              value={buyAmount}
-              disabled
-              placeholder="0.0"
-              className="w-full bg-transparent text-3xl text-white focus:outline-none disabled:opacity-70 appearance-none"
-            />
-            <TokenSelector token={buyToken} setToken={setBuyToken} otherToken={sellToken} />
-          </div>
-        </div>
-
         <button
           onClick={handleSwap}
-          disabled={isExecuting || !quote || !isConnected || parseFloat(sellAmount) <= 0}
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+          disabled={isButtonDisabled}
+          className="w-full mt-6 py-4 px-4 rounded-xl text-lg font-bold text-white bg-vibrant-purple shadow-purple-glow transition-all duration-300 transform hover:brightness-110 hover:shadow-purple-glow-soft animate-glow disabled:bg-gray-600 disabled:shadow-none disabled:cursor-not-allowed disabled:animate-none"
         >
-          {isExecuting ? 'Processing...' : (quote ? 'Swap' : 'Enter an amount')}
+          {buttonText}
         </button>
-
       </div>
     </div>
   );
