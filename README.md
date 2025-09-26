@@ -1,6 +1,4 @@
-# base-agenta
-
-# Next.js dApp Starter
+# Base Agenta
 
 This is a starter project for building decentralized applications (dApps) with Next.js, TypeScript, and a complete Web3 stack.
 
@@ -11,7 +9,7 @@ This is a starter project for building decentralized applications (dApps) with N
 - **Tailwind CSS:** A utility-first CSS framework for rapid UI development.
 - **Web3Modal:** A simple and intuitive wallet connection modal.
 - **wagmi & viem:** Powerful React hooks and utilities for interacting with Ethereum.
-- **Reusable Components:** A set of pre-built components to get you started.
+- **Reusable Components:** A set of pre-built components for token balances, transfers, and swaps.
 
 ## Getting Started
 
@@ -29,9 +27,8 @@ This is a starter project for building decentralized applications (dApps) with N
     cp .env.example .env.local
     ```
 
-    - `NEXT_PUBLIC_RPC_URLS`: A comma-separated list of RPC URLs for the supported networks.
-    - `NEXT_PUBLIC_ERC20_CONTRACT`: The contract address of the ERC-20 token to display the balance for.
-    - `NEXT_PUBLIC_APP_NAME`: The name of your application.
+    - `NEXT_PUBLIC_PROJECT_ID`: Your WalletConnect project ID. You can get one from [WalletConnect Cloud](https://cloud.walletconnect.com/).
+    - `ZAPPER_API_KEY`: Your API key for the Zapper API. You can request one from Zapper's developer portal.
 
 3.  **Run the Development Server:**
 
