@@ -1,6 +1,7 @@
 import BalanceCard from "@/components/BalanceCard";
 import Navbar from "@/components/Navbar";
 import SendForm from "@/components/SendForm";
+import TransactionHistory from "@/components/TransactionHistory";
 
 export default function Home() {
   return (
@@ -20,6 +21,10 @@ export default function Home() {
           <h2 className="text-2xl font-semibold text-white">Send Funds</h2>
           <SendForm />
         </div>
+      </div>
+
+      <div className="flex justify-center">
+        <TransactionHistory />
       </div>
     </div>
   );
