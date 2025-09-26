@@ -11,10 +11,11 @@ This is a full-fledged Web3 dApp (decentralized application) built with a modern
 **Core user capabilities:**
 - Connect a Web3 wallet (e.g., MetaMask).
 - View asset balances (native and ERC-20 tokens) across multiple supported chains.
+- View a gallery of owned NFTs.
 - Send native assets and ERC-20 tokens to other addresses.
-- View transaction history for the connected wallet on the selected chain.
+- Swap tokens using a DEX aggregator for the best prices.
 
-The application prioritizes a clean, responsive, and intuitive user interface to provide a clear and organized overview of a user's digital assets.
+The application prioritizes a clean, responsive, and intuitive user interface to provide a clear and organized overview of a user's digital assets and actions.
 
 ---
 
@@ -27,12 +28,14 @@ This section details the foundational technologies and the structural design of 
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
 - **Web3 Connectivity:** `wagmi` & `viem`
-- **External Data:** Covalent API (for token balances and transaction history)
+- **External Data APIs:**
+  - **Covalent:** For token balances, transaction history, and NFT data.
+  - **0x API:** For DEX aggregation to find the best swap prices.
 
 ### **Project Structure (`/src` directory)**
 - **`/app`**: Handles page routing and global layout.
 - **`/components`**: Contains all reusable React components.
-- **`/lib`**: Houses core logic, configurations, and client initializations.
+- **`/lib`**: Houses core logic, configurations (like ABIs), and client initializations.
 
 ---
 
@@ -46,32 +49,19 @@ This section documents each key component and its specific role in the applicati
 
 ### **Data Display Components**
 - **`BalanceCard.tsx`**: Displays the user's balance of the native network asset.
-- **`TokenBalances.tsx`**: Fetches and displays a list of all ERC-20 tokens a user owns using the Covalent API.
-- **`TransactionHistory.tsx`**: Fetches and displays a list of recent transactions using the Covalent API.
+- **`TokenBalances.tsx`**: Fetches and displays a list of all ERC-20 tokens a user owns.
+- **`TransactionHistory.tsx`**: Fetches and displays a list of recent transactions.
+- **`NFTGallery.tsx`**: Fetches and displays a user's NFT portfolio from the Covalent API.
 
 ### **User Interaction Components**
-- **`SendForm.tsx`**: Provides a fully functional form for users to send native assets (ETH) and ERC-20 tokens. It integrates `wagmi`'s `useSendTransaction` and `useWriteContract` hooks to perform the transactions.
+- **`SendForm.tsx`**: Provides a form for users to send native assets (ETH) and ERC-20 tokens. It integrates `wagmi`'s `useSendTransaction` and `useWriteContract` hooks.
+- **`SwapForm.tsx`**: **(Phase 2 Complete)** Provides a full-featured token swap interface. It uses the **0x API** to fetch quotes and handles the entire transaction lifecycle, including ERC-20 `approve` checks and execution, by leveraging `wagmi` hooks.
 
 ---
 
 ## **4. Future Development Roadmap**
 
 This section outlines a clear, phased plan for introducing new features and enhancements.
-
-### **Phase 1: Expand Asset Coverage with NFTs**
-- **Goal:** Create an NFT Portfolio Gallery.
-- **Tasks:**
-  1. Update the Covalent API call in a new or existing component to include the `nft=true` parameter.
-  2. Design and build a visually appealing gallery component to display NFT images, names, and collections.
-  3. Provide links to popular NFT marketplaces like OpenSea for each asset.
-
-### **Phase 2: Introduce Advanced DeFi Actions**
-- **Goal:** Integrate a token swap/exchange feature.
-- **Tasks:**
-  1. Research and select a DEX aggregator API (e.g., 0x, 1inch).
-  2. Build a swap interface where users can select input and output tokens.
-  3. Integrate the chosen API to fetch quotes and transaction data.
-  4. Use `wagmi` hooks to prompt the user to sign and send the swap transaction.
 
 ### **Phase 3: Achieve Full Portfolio Insight**
 - **Goal:** Build a comprehensive DeFi Positions Dashboard.

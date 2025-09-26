@@ -5,8 +5,9 @@ import Navbar from '../components/Navbar';
 import BalanceCard from '../components/BalanceCard';
 import TokenBalances from '../components/TokenBalances';
 import TransactionHistory from '../components/TransactionHistory';
+import SwapForm from '../components/SwapForm'; // <-- 1. Import SwapForm
 import SendForm from '../components/SendForm';
-import NFTGallery from '../components/NFTGallery'; // <-- 1. Import the new component
+import NFTGallery from '../components/NFTGallery';
 import { Toaster } from 'react-hot-toast';
 
 const Home = () => {
@@ -21,12 +22,13 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1 space-y-6">
               <BalanceCard address={address} />
-            </div>
-            <div className="md:col-span-2 space-y-6">
               <TokenBalances address={address} />
               <TransactionHistory address={address} />
+            </div>
+            <div className="md:col-span-2 space-y-6">
+              <SwapForm /> {/* <-- 2. Render SwapForm here */}
               <SendForm />
-              <NFTGallery /> {/* <-- 2. Render the component here */}
+              <NFTGallery />
             </div>
           </div>
         ) : (
