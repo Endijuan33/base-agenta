@@ -1,10 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
-import Image from 'next/image'; // Import the Next.js Image component
+import Image from 'next/image';
 
-// Define specific types for the Covalent API response to avoid 'any'
+// 1. Define an interface for the component's props
+interface NFTGalleryProps {
+  address: `0x${string}` | undefined;
+}
+
+// Define specific types for the Covalent API response
 interface NftExternalData {
   name: string;
   image: string;
@@ -26,14 +30,15 @@ interface NftDisplayData {
   image_url: string;
 }
 
-const NFTGallery = () => {
-  const { address, isConnected } = useAccount();
+// 2. Accept the 'address' prop
+const NFTGallery = ({ address }: NFTGalleryProps) => {
   const [nfts, setNfts] = useState<NftDisplayData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isConnected || !address) {
+    // 3. Use the address from props. If no address, do nothing.
+    if (!address) {
       setNfts([]);
       return;
     }
@@ -48,7 +53,6 @@ const NFTGallery = () => {
         }
         const data = await response.json();
         
-        // Apply the specific types to the filter and map operations
         const nftItems = data.data.items
           .filter((item: CovalentApiItem) => item.type === 'nft' && item.nft_data?.[0]?.external_data?.image)
           .map((item: CovalentApiItem) => ({
@@ -58,7 +62,7 @@ const NFTGallery = () => {
           }));
 
         setNfts(nftItems);
-      } catch (err) { // Avoid 'any' in catch block
+      } catch (err) {
         if (err instanceof Error) {
             setError(err.message);
         } else {
@@ -70,10 +74,15 @@ const NFTGallery = () => {
     };
 
     fetchNfts();
-  }, [address, isConnected]);
+  }, [address]); // 4. useEffect dependency is now the address prop
 
-  if (!isConnected) {
-    return null;
+  if (!address) {
+     return (
+        <div className="w-full max-w-4xl bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mt-8">
+            <h2 className="text-2xl font-bold text-white mb-6">NFT Gallery</h2>
+            <p className="text-center text-gray-300">Connect your wallet to see your NFTs.</p>
+        </div>
+    );
   }
 
   return (
@@ -93,8 +102,6 @@ const NFTGallery = () => {
                     layout="fill" 
                     objectFit="cover" 
                     className="rounded-t-lg"
-                    // To use next/image, we need to trust the source domains.
-                    // For now, we use unoptimized. A better approach is to list known domains in next.config.js
                     unoptimized={true}
                   />
                 </div>
