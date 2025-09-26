@@ -9,18 +9,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // Setup queryClient
 const queryClient = new QueryClient()
 
-// 1. Get projectId at https://cloud.walletconnect.com
+// 1. Get projectId
 const projectId = process.env.NEXT_PUBLIC_PROJECT_ID;
-
 if (!projectId) {
   throw new Error('NEXT_PUBLIC_PROJECT_ID is not set in .env.local')
 }
 
 // 2. Create wagmiConfig
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://localhost:3000';
+
 const metadata = {
-  name: 'Web3Modal',
-  description: 'Web3Modal Example',
-  url: 'https://web3modal.com',
+  name: 'Modern dApp',
+  description: 'A modern, robust dApp with a great UI',
+  url: appUrl,
   icons: ['https://avatars.githubusercontent.com/u/37784886']
 }
 
