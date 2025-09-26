@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
 import Image from 'next/image';
 
 // Define the structure of a token balance item
@@ -22,14 +21,17 @@ const formatBalance = (balance: string, decimals: number) => {
   return result.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 5 });
 };
 
-const TokenBalances = () => {
-  const { address, isConnected } = useAccount();
+interface TokenBalancesProps {
+  address: `0x${string}` | undefined;
+}
+
+const TokenBalances = ({ address }: TokenBalancesProps) => {
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isConnected || !address) {
+    if (!address) {
       setBalances([]);
       return;
     }
@@ -63,10 +65,10 @@ const TokenBalances = () => {
     };
 
     fetchBalances();
-  }, [address, isConnected]);
+  }, [address]);
 
   const renderContent = () => {
-    if (!isConnected) {
+    if (!address) {
       return <p className="text-center text-gray-400">Please connect your wallet to view token balances.</p>;
     }
     if (isLoading) {

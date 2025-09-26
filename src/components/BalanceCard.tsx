@@ -1,13 +1,16 @@
 'use client'
 
-import { useAccount, useBalance } from 'wagmi'
+import { useBalance } from 'wagmi'
 import { formatUnits } from 'viem'
 
-const BalanceCard = () => {
-  const { address, isConnected } = useAccount()
+interface BalanceCardProps {
+  address: `0x${string}` | undefined;
+}
+
+const BalanceCard = ({ address }: BalanceCardProps) => {
   const { data: balance, isLoading } = useBalance({ address })
 
-  if (!isConnected) {
+  if (!address) {
     return (
       <div className="p-6 rounded-lg bg-[rgba(var(--card-background),0.7)] border border-[rgba(var(--card-border),0.7)] backdrop-blur-sm shadow-lg">
         <p className="text-gray-400">Please connect your wallet to see your balance.</p>

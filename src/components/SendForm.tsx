@@ -107,7 +107,7 @@ const SendForm = () => {
         </button>
 
         {hash && <div className="mt-4 text-green-400 text-center break-words">Transaction sent! Hash: {hash}</div>}
-        {error && <div className="mt-4 text-red-400 text-center">Error: {error.shortMessage}</div>}
+        {error && <div className="mt-4 text-red-400 text-center">Error: {error.message}</div>}
       </form>
     </div>
   );

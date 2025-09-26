@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
 
 // Define the structure of a transaction item based on Covalent API response
 interface Transaction {
@@ -28,14 +27,17 @@ const ExternalLinkIcon = () => (
   </svg>
 );
 
-const TransactionHistory = () => {
-  const { address, isConnected } = useAccount();
+interface TransactionHistoryProps {
+    address: `0x${string}` | undefined;
+}
+
+const TransactionHistory = ({ address }: TransactionHistoryProps) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isConnected || !address) {
+    if (!address) {
       setTransactions([]);
       return;
     }
@@ -70,10 +72,10 @@ const TransactionHistory = () => {
     };
 
     fetchTransactions();
-  }, [address, isConnected]);
+  }, [address]);
 
   const renderContent = () => {
-    if (!isConnected) {
+    if (!address) {
       return <p className="text-center text-gray-400">Please connect your wallet to view transaction history.</p>;
     }
     if (isLoading) {
